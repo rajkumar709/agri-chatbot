@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Agricultural Chatbot</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: linear-gradient(to right, #4CAF50, #2E7D32);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .chat-container {
+            background: white;
+            width: 400px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+
+        h2 {
+            text-align: center;
+            color: #2E7D32;
+        }
+
+        #chatbox {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .user {
+            text-align: right;
+            background: #d1f5d3;
+            padding: 8px;
+            border-radius: 10px;
+            margin: 5px;
+        }
+
+        .bot {
+            text-align: left;
+            background: #f1f1f1;
+            padding: 8px;
+            border-radius: 10px;
+            margin: 5px;
+        }
+
+        input {
+            width: 75%;
+            padding: 8px;
+        }
+
+        button {
+            padding: 8px;
+            background: #2E7D32;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1B5E20;
+        }
+    </style>
+</head>
+<body>
+
+<div class="chat-container">
+    <h2>🌾 Agri AI Chatbot</h2>
+    <div id="chatbox"></div>
+    <input type="text" id="userInput" placeholder="Ask about crops, fertilizer..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startVoice()">Speak</button>
+</div>
+
+<script>
+function sendMessage() {
+    var userText = document.getElementById("userInput").value;
+
+    fetch("/", {
+        method: "POST",
+        body: new URLSearchParams({ message: userText }),
+        headers: { "Content-Type": "application/x-www-form-urlencoded" }
+    })
+    .then(response => response.text())
+    .then(data => {
+        document.getElementById("chatbox").innerHTML += 
+            "<p class='user'><b>You:</b> " + userText + "</p>";
+        document.getElementById("chatbox").innerHTML += 
+            "<p class='bot'><b>Bot:</b> " + data + "</p>";
+        document.getElementById("userInput").value = "";
+    });
+}
+function startVoice() {
+
+const recognition = new webkitSpeechRecognition();
+
+recognition.lang = "en-IN";
+
+recognition.onresult = function(event) {
+
+document.getElementById("userInput").value =
+event.results[0][0].transcript;
+
+};
+
+recognition.start();
+
+}
+</script>
+
+</body>
+</html>
