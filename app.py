@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import datetime
-from flask import Flask, render_template, request
+from flask import Flask, render_template, requests
 
 app = Flask(__name__)
 
@@ -111,8 +111,8 @@ def get_bot_response(user_input):
 def home():
     bot_response = ""
 
-    if request.method == "POST":
-        user_input = request.form["message"]
+    if requests.method == "POST":
+        user_input = requests.form["message"]
         bot_response = get_bot_response(user_input)
         return bot_response
 
