@@ -1,92 +1,117 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>AI Agricultural Chatbot</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: linear-gradient(to right, #4CAF50, #2E7D32);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+<title>AI Agricultural Chatbot</title>
 
-        .chat-container {
-            background: white;
-            width: 400px;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-        }
+<style>
 
-        h2 {
-            text-align: center;
-            color: #2E7D32;
-        }
+body{
+font-family: Arial;
+background: linear-gradient(to right,#4CAF50,#2E7D32);
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
+}
 
-        #chatbox {
-            height: 350px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            scroll-behavior: smooth;
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 10px;
-        }
+.chat-container{
+background:white;
+width:420px;
+padding:20px;
+border-radius:15px;
+box-shadow:0 10px 20px rgba(0,0,0,0.2);
+display:flex;
+flex-direction:column;
+}
 
-        .user {
-            align-self: flex-end;
-            background: #d1f5d3;
-            padding: 8px 12px;
-            border-radius: 10px 12px 0 12px;
-            max-width: 75%;
-        }
+h2{
+text-align:center;
+color:#2E7D32;
+margin-bottom:10px;
+}
 
-        .bot {
-            align-self: flex-start;
-            background: #f1f1f1;
-            padding: 8px 12px;
-            border-radius: 12px 12px 12px 0;
-            max-width: 75%;
-        }
+#chatbox{
+height:350px;
+overflow-y:auto;
+border:1px solid #ddd;
+padding:10px;
+margin-bottom:10px;
+display:flex;
+flex-direction:column;
+gap:8px;
+scroll-behavior:smooth;
+}
 
-        input {
-            width: 75%;
-            padding: 8px;
-        }
+.user{
+align-self:flex-end;
+background:#dcf8c6;
+padding:8px 12px;
+border-radius:12px 12px 0 12px;
+max-width:75%;
+}
 
-        button {
-            padding: 8px;
-            background: #2E7D32;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
+.bot{
+align-self:flex-start;
+background:#f1f0f0;
+padding:8px 12px;
+border-radius:12px 12px 12px 0;
+max-width:75%;
+}
 
-        button:hover {
-            background: #1B5E20;
-        }
-    </style>
+.input-area{
+display:flex;
+gap:5px;
+}
+
+input{
+flex:1;
+padding:10px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+padding:10px;
+background:#2E7D32;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
+button:hover{
+background:#1B5E20;
+}
+
+</style>
 </head>
+
 <body>
 
 <div class="chat-container">
-    <h2>🌾 Agri AI Chatbot</h2>
-    <div id="chatbox"></div>
-    <input type="text" id="userInput" placeholder="Ask about crops, fertilizer..." />
-    <button onclick="sendMessage()">Send</button>
-    <button onclick="startVoice()">Speak</button>
+
+<h2>🌾 Agri AI Chatbot</h2>
+
+<div id="chatbox"></div>
+
+<div class="input-area">
+<input type="text" id="userInput" placeholder="Ask about crops, fertilizer..." />
+<button onclick="sendMessage()">Send</button>
+<button onclick="startVoice()">🎤</button>
+</div>
+
 </div>
 
 <script>
 
 function sendMessage(){
 
-let message = document.getElementById("userInput").value;
-let chatBox = document.getElementById("chatbox");
+let message=document.getElementById("userInput").value;
+let chatBox=document.getElementById("chatbox");
+
+if(message.trim()==="") return;
 
 fetch("/",{
 method:"POST",
@@ -100,22 +125,47 @@ body:"message="+encodeURIComponent(message)
 
 .then(data=>{
 
-chatBox.innerHTML += `<div class="user">${message}</div>`;
-chatBox.innerHTML += `<div class="bot">${data}</div>`;
+chatBox.innerHTML+=`<div class="user">${message}</div>`;
+chatBox.innerHTML+=`<div class="bot">${data}</div>`;
+
+chatBox.scrollTop=chatBox.scrollHeight;
+
+setTimeout(function(){
+ document.getElementById("typing").remove();
+
+ chatBox.innerHTML+='<div class="bot">${data}</div>';
+
+ chatBox.scrollTop=chatBox.scrollHeight;
+},1000);
 
 document.getElementById("userInput").value="";
 
-chatBox.scrollTop = chatBox.scrollHeight;
-
 });
 
 }
 
-document.getElementById("userInput").addEventListener("keypress", function(e){
-if(e.key === "Enter"){
+document.getElementById("userInput").addEventListener("keypress",function(e){
+if(e.key==="Enter"){
 sendMessage();
 }
 });
+
+function startVoice(){
+
+const recognition=new webkitSpeechRecognition();
+
+recognition.lang="en-IN";
+
+recognition.onresult=function(event){
+
+document.getElementById("userInput").value=
+event.results[0][0].transcript;
+
+};
+
+recognition.start();
+
+}
 
 </script>
 

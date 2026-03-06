@@ -67,7 +67,15 @@ def get_weather(city):
     temperature = data["main"]["temp"]
     description = data["weather"][0]["description"]
 
-    return f"Weather in {city.title()}: {temperature}°C with {description}."
+    if temperature > 30:
+        crop = "Millets like ragi and jowar are suitable for hot weather."
+    elif temperature > 25:
+        crop = "Crops like maize and cotton can grow well in warm weather."
+    elif temperature > 20:
+        crop = "Crops like wheat and barley can grow well in moderate weather."
+    else:
+        crop = "Crops like rice and sugarcane can grow well in cool weather."
+    return f"Weather in {city.title()}: is {temperature}°C with {description}. Suggested crops: {crop}."
 
 def get_bot_response(user_input):
 
