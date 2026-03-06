@@ -58,7 +58,7 @@ def get_weather(city):
         "units": "metric"
     }
 
-    response = request.get(url, params=params)
+    response = requests.get(url, params=params)
     data = response.json()
 
     if response.status_code != 200:
