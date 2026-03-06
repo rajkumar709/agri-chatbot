@@ -26,27 +26,31 @@
         }
 
         #chatbox {
-            height: 300px;
+            height: 350px;
             overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            scroll-behavior: smooth;
             border: 1px solid #ddd;
             padding: 10px;
             margin-bottom: 10px;
         }
 
         .user {
-            text-align: right;
+            align-self: flex-end;
             background: #d1f5d3;
-            padding: 8px;
-            border-radius: 10px;
-            margin: 5px;
+            padding: 8px 12px;
+            border-radius: 10px 12px 0 12px;
+            max-width: 75%;
         }
 
         .bot {
-            text-align: left;
+            align-self: flex-start;
             background: #f1f1f1;
-            padding: 8px;
-            border-radius: 10px;
-            margin: 5px;
+            padding: 8px 12px;
+            border-radius: 12px 12px 12px 0;
+            max-width: 75%;
         }
 
         input {
@@ -78,39 +82,41 @@
 </div>
 
 <script>
-function sendMessage() {
-    var userText = document.getElementById("userInput").value;
 
-    fetch("/", {
-        method: "POST",
-        body: new URLSearchParams({ message: userText }),
-        headers: { "Content-Type": "application/x-www-form-urlencoded" }
-    })
-    .then(response => response.text())
-    .then(data => {
-        document.getElementById("chatbox").innerHTML += 
-            "<p class='user'><b>You:</b> " + userText + "</p>";
-        document.getElementById("chatbox").innerHTML += 
-            "<p class='bot'><b>Bot:</b> " + data + "</p>";
-        document.getElementById("userInput").value = "";
-    });
-}
-function startVoice() {
+function sendMessage(){
 
-const recognition = new webkitSpeechRecognition();
+let message = document.getElementById("userInput").value;
+let chatBox = document.getElementById("chatbox");
 
-recognition.lang = "en-IN";
+fetch("/",{
+method:"POST",
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+},
+body:"message="+encodeURIComponent(message)
+})
 
-recognition.onresult = function(event) {
+.then(res=>res.text())
 
-document.getElementById("userInput").value =
-event.results[0][0].transcript;
+.then(data=>{
 
-};
+chatBox.innerHTML += `<div class="user">${message}</div>`;
+chatBox.innerHTML += `<div class="bot">${data}</div>`;
 
-recognition.start();
+document.getElementById("userInput").value="";
+
+chatBox.scrollTop = chatBox.scrollHeight;
+
+});
 
 }
+
+document.getElementById("userInput").addEventListener("keypress", function(e){
+if(e.key === "Enter"){
+sendMessage();
+}
+});
+
 </script>
 
 </body>
