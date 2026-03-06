@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime
-from flask import Flask, render_template, requests
+from flask import Flask, render_template, request
+import requests
 
 app = Flask(__name__)
 
@@ -57,7 +58,7 @@ def get_weather(city):
         "units": "metric"
     }
 
-    response = requests.get(url, params=params)
+    response = request.get(url, params=params)
     data = response.json()
 
     if response.status_code != 200:
@@ -111,8 +112,8 @@ def get_bot_response(user_input):
 def home():
     bot_response = ""
 
-    if requests.method == "POST":
-        user_input = requests.form["message"]
+    if request.method == "POST":
+        user_input = request.form["message"]
         bot_response = get_bot_response(user_input)
         return bot_response
 
