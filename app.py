@@ -77,6 +77,27 @@ def get_weather(city):
         crop = "Crops like rice and sugarcane can grow well in cool weather."
     return f"Weather in {city.title()}: is {temperature}°C with {description}. Suggested crops: {crop}."
 
+def recommend_crop(user_input):
+
+    user_input = user_input.lower()
+
+    if "black soil" in user_input:
+        if "high rainfall" in user_input:
+            return "Recommended crops: Cotton, Soybean, Sugarcane"
+        else:
+            return "Recommended crops: Cotton, Sunflower"
+
+    if "red soil" in user_input:
+        if "low rainfall" in user_input:
+            return "Recommended crops: Millets, Groundnut"
+        else:
+            return "Recommended crops: Pulses, Maize"
+
+    if "sandy soil" in user_input:
+        return "Recommended crops: Groundnut, Watermelon, Coconut"
+
+    return None
+
 def get_bot_response(user_input):
 
     user_input = user_input.lower()
