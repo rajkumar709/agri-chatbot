@@ -1,171 +1,218 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html>
-
 <head>
-<title>AI Agricultural Chatbot</title>
+    <title>Agri AI Chatbot 🌱</title>
 
-<style>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+        }
 
-body{
-font-family: Arial;
-background: linear-gradient(to right,#4CAF50,#2E7D32);
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-margin:0;
-}
+        h1 {
+            text-align: center;
+            padding: 15px;
+        }
 
-.chat-container{
-background:white;
-width:420px;
-padding:20px;
-border-radius:15px;
-box-shadow:0 10px 20px rgba(0,0,0,0.2);
-display:flex;
-flex-direction:column;
-}
+        #chat-container {
+            width: 90%;
+            max-width: 600px;
+            margin: auto;
+            height: 60vh;
+            overflow-y: auto;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 10px;
+        }
 
-h2{
-text-align:center;
-color:#2E7D32;
-margin-bottom:10px;
-}
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
 
-#chatbox{
-height:350px;
-overflow-y:auto;
-border:1px solid #ddd;
-padding:10px;
-margin-bottom:10px;
-display:flex;
-flex-direction:column;
-gap:8px;
-scroll-behavior:smooth;
-}
+        .user {
+            background: #22c55e;
+            margin-left: auto;
+            text-align: right;
+        }
 
-.user{
-align-self:flex-end;
-background:#dcf8c6;
-padding:8px 12px;
-border-radius:12px 12px 0 12px;
-max-width:75%;
-}
+        .bot {
+            background: #334155;
+            text-align: left;
+        }
 
-.bot{
-align-self:flex-start;
-background:#f1f0f0;
-padding:8px 12px;
-border-radius:12px 12px 12px 0;
-max-width:75%;
-}
+        #input-area {
+            display: flex;
+            width: 90%;
+            max-width: 600px;
+            margin: 10px auto;
+        }
 
-.input-area{
-display:flex;
-gap:5px;
-}
+        input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+        }
 
-input{
-flex:1;
-padding:10px;
-border-radius:8px;
-border:1px solid #ccc;
-}
+        button {
+            padding: 10px;
+            background: #22c55e;
+            border: none;
+            color: white;
+            cursor: pointer;
+            margin-left: 5px;
+        }
 
-button{
-padding:10px;
-background:#2E7D32;
-color:white;
-border:none;
-border-radius:8px;
-cursor:pointer;
-}
-
-button:hover{
-background:#1B5E20;
-}
-
-</style>
+        #upload-section {
+            width: 90%;
+            max-width: 600px;
+            margin: 20px auto;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
 
-<div class="chat-container">
+<h1>🌱 Agri AI Assistant</h1>
 
-<h2>🌾 Agri AI Chatbot</h2>
+<div id="chat-container"></div>
 
-<div id="chatbox"></div>
-
-<div class="input-area">
-<input type="text" id="userInput" placeholder="Ask about crops, fertilizer..." />
-<button onclick="sendMessage()">Send</button>
-<button onclick="startVoice()">🎤</button>
+<div id="input-area">
+    <input type="text" id="userInput" placeholder="Ask something..." />
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="startVoice()">🎤</button>
 </div>
 
+<div style="text-align:center;">
+    <button onclick="clearChat()">🗑 Clear Chat</button>
+</div>
+
+<!-- 🌿 IMAGE UPLOAD -->
+<div id="upload-section">
+    <h2>🌿 Upload Leaf Image</h2>
+    <input type="file" id="leafInput">
+    <br><br>
+    <button onclick="uploadImage()">Detect Disease</button>
+    <p id="result"></p>
 </div>
 
 <script>
+// Add message
+function addMessage(text, className) {
+    const chat = document.getElementById("chat-container");
+    const msg = document.createElement("div");
+    msg.className = "message " + className;
+    msg.innerText = text;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+    return msg;
+}
 
-function sendMessage(){
+// Send message
+function sendMessage() {
+    const input = document.getElementById("userInput");
+    const text = input.value;
 
-let message=document.getElementById("userInput").value;
-let chatBox=document.getElementById("chatbox");
+    if (!text) return;
 
-if(message.trim()==="") return;
+    addMessage(text, "user");
+    input.value = "";
 
-fetch("/",{
-method:"POST",
-headers:{
-"Content-Type":"application/x-www-form-urlencoded"
-},
-body:"message="+encodeURIComponent(message)
-})
+    // Typing animation
+    const typingMsg = addMessage("Typing...", "bot");
 
-.then(res=>res.text())
+    fetch("/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: text })
+    })
+    .then(res => res.json())
+    .then(data => {
+        typingMsg.remove();
+        addMessage(data.response, "bot");
+        saveChat(text, data.response);
+    });
+}
 
-.then(data=>{
+// Save chat
+function saveChat(user, bot) {
+    let chats = JSON.parse(localStorage.getItem("chatHistory")) || [];
+    chats.push({ user, bot });
+    localStorage.setItem("chatHistory", JSON.stringify(chats));
+}
 
-chatBox.innerHTML+=`<div class="user">${message}</div>`;
-chatBox.innerHTML+=`<div class="bot">${data}</div>`;
+// Load chat
+function loadChat() {
+    let chats = JSON.parse(localStorage.getItem("chatHistory")) || [];
 
-chatBox.scrollTop=chatBox.scrollHeight;
+    chats.forEach(chat => {
+        addMessage(chat.user, "user");
+        addMessage(chat.bot, "bot");
+    });
+}
 
-setTimeout(function(){
- document.getElementById("typing").remove();
+// Clear chat
+function clearChat() {
+    localStorage.removeItem("chatHistory");
+    document.getElementById("chat-container").innerHTML = "";
+}
 
- chatBox.innerHTML+='<div class="bot">${data}</div>';
+// Voice input
+function startVoice() {
+    const recognition = new webkitSpeechRecognition();
 
- chatBox.scrollTop=chatBox.scrollHeight;
-},1000);
+    recognition.lang = "en-IN";
 
-document.getElementById("userInput").value="";
+    recognition.onresult = function(event) {
+        document.getElementById("userInput").value =
+            event.results[0][0].transcript;
+    };
 
+    recognition.start();
+}
+
+// Image upload
+function uploadImage() {
+    const fileInput = document.getElementById("leafInput");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Please select an image");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("leaf", file);
+
+    document.getElementById("result").innerText = "Analyzing...";
+
+    fetch("/predict", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("result").innerText = data.result;
+    });
+}
+
+// Enter key support
+document.getElementById("userInput")
+.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") {
+        sendMessage();
+    }
 });
 
-}
-
-document.getElementById("userInput").addEventListener("keypress",function(e){
-if(e.key==="Enter"){
-sendMessage();
-}
-});
-
-function startVoice(){
-
-const recognition=new webkitSpeechRecognition();
-
-recognition.lang="en-IN";
-
-recognition.onresult=function(event){
-
-document.getElementById("userInput").value=
-event.results[0][0].transcript;
-
-};
-
-recognition.start();
-
-}
+// Load chat on start
+window.onload = loadChat;
 
 </script>
 

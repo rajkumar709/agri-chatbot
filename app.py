@@ -1,10 +1,57 @@
 import sqlite3
+import os
 from datetime import datetime
 from flask import Flask, render_template, request
 import requests
+from PIL import Image
+from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)
 
+# 🔑 ADD YOUR OPENROUTER API KEY HERE
+OPENROUTER_API_KEY = os.getenv("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")
+
+# -------------------- AI FUNCTION --------------------
+def get_ai_response(user_input):
+    url = "https://openrouter.ai/api/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "http://localhost:5000",
+        "X-Title": "AgriChatbot"
+    }
+
+    data = {
+        "model": "stepfun/step-3.5-flash:free",  # ✅ FREE MODEL
+        "messages": [
+            {
+                "role": "user",
+                "content": f"you are an agriculture expert chatbot. answer in 1-2 sentences. {user_input}"
+            },
+            {
+                "role": "user",
+                "content": user_input
+            }
+        ]
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        result = response.json()
+
+        print("API RESPONSE:", result)
+
+        if "choices" in result:
+            return result["choices"][0]["message"]["content"]
+        else:
+            return f"API Error: {result}"
+
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+
+# -------------------- DATABASE --------------------
 def init_db():
     conn = sqlite3.connect("chatbot.db")
     c = conn.cursor()
@@ -22,36 +69,12 @@ def init_db():
 
 init_db()
 
-def recommend_crop(user_input):
 
-    user_input = user_input.lower()
-
-    if "black soil" in user_input:
-        return "Black soil is good for growing cotton and soybean."
-
-    if "clay soil" in user_input:
-        return "Clay soil is suitable for rice cultivation."
-
-    if "sandy soil" in user_input:
-        return "Sandy soil is good for growing groundnut and watermelon."
-
-    if "high rainfall" in user_input:
-        return "High rainfall areas are suitable for rice and sugarcane."
-
-    if "low rainfall" in user_input:
-        return "Low rainfall areas are suitable for millets like ragi and jowar."
-
-    return None
-import requests
-
-import requests
-
+# -------------------- WEATHER --------------------
 def get_weather(city):
-
     API_KEY = "c81827b3ec89ba91d141f002b16f4c85"
 
     url = "https://api.openweathermap.org/data/2.5/weather"
-
     params = {
         "q": city,
         "appid": API_KEY,
@@ -62,102 +85,98 @@ def get_weather(city):
     data = response.json()
 
     if response.status_code != 200:
-        return "Sorry, I couldn't find the weather for that location."
+        return "Sorry, I couldn't find the weather."
 
-    temperature = data["main"]["temp"]
-    description = data["weather"][0]["description"]
+    temp = data["main"]["temp"]
+    desc = data["weather"][0]["description"]
 
-    if temperature > 30:
-        crop = "Millets like ragi and jowar are suitable for hot weather."
-    elif temperature > 25:
-        crop = "Crops like maize and cotton can grow well in warm weather."
-    elif temperature > 20:
-        crop = "Crops like wheat and barley can grow well in moderate weather."
-    else:
-        crop = "Crops like rice and sugarcane can grow well in cool weather."
-    return f"Weather in {city.title()}: is {temperature}°C with {description}. Suggested crops: {crop}."
+    return f"Weather in {city}: {temp}°C with {desc}"
 
+
+# -------------------- CROP RECOMMENDATION --------------------
 def recommend_crop(user_input):
-
     user_input = user_input.lower()
 
     if "black soil" in user_input:
-        if "high rainfall" in user_input:
-            return "Recommended crops: Cotton, Soybean, Sugarcane"
-        else:
-            return "Recommended crops: Cotton, Sunflower"
+        return "Recommended crops: Cotton, Soybean"
 
-    if "red soil" in user_input:
-        if "low rainfall" in user_input:
-            return "Recommended crops: Millets, Groundnut"
-        else:
-            return "Recommended crops: Pulses, Maize"
+    if "clay soil" in user_input:
+        return "Recommended crops: Rice"
 
     if "sandy soil" in user_input:
-        return "Recommended crops: Groundnut, Watermelon, Coconut"
+        return "Recommended crops: Groundnut, Watermelon"
 
     return None
 
-def get_bot_response(user_input):
 
+# -------------------- BOT LOGIC --------------------
+def get_bot_response(user_input):
     user_input = user_input.lower()
-    crop_result = recommend_crop(user_input)
-    if crop_result:
-        return crop_result
-    if "ನಮಸ್ಕಾರ" in user_input:
-        return "ನಮಸ್ಕಾರ ರೈತರೆ! ನಾನು ನಿಮ್ಮ ಕೃಷಿ ಸಹಾಯಕ ಚಾಟ್‌ಬಾಟ್."
-    if "नमस्ते" in user_input:
-        return "नमस्ते किसान! मैं आपका कृषि सहायक चैटबॉट हूँ|"
+
+    # Crop logic
+    crop = recommend_crop(user_input)
+    if crop:
+        return crop
+
+    # Weather
     if "weather in" in user_input:
-        city=user_input.replace("weather in","").strip()
+        city = user_input.replace("weather in", "").strip()
         return get_weather(city)
 
+    # Local responses
     responses = {
-
-        "rice": "Rice grows well in warm climate with clay soil and regular irrigation.",
-        "wheat": "Wheat requires cool climate and well-drained loamy soil.",
-        "maize": "Maize grows best in warm weather with fertile, well-drained soil.",
-        "cotton": "Cotton requires black soil and warm climate for good yield.",
-        "fertilizer": "Use NPK fertilizer (Nitrogen, Phosphorus, Potassium) for better yield.",
-        "organic fertilizer": "Organic fertilizers like compost and manure improve soil health.",
-        "pest": "Neem oil spray is effective for controlling common crop pests.",
-        "irrigation": "Drip irrigation saves water and improves crop productivity.",
-        "soil": "Healthy soil contains nutrients, organic matter, air, and water.",
-        "weather": "Check local weather forecast before irrigation or spraying pesticides.",
-        "scheme": "PM-KISAN scheme provides financial assistance to farmers.",
-        "crop rotation": "Crop rotation helps maintain soil fertility and reduce pests.",
-        "disease": "Use certified seeds and proper pesticides to prevent crop diseases.",
-        "harvest": "Harvest crops at the right maturity stage for better yield and quality.",
-        "seed": "Use high-quality certified seeds for better crop productivity."
+        "rice": "Rice grows well in warm climate with irrigation.",
+        "wheat": "Wheat requires cool climate.",
+        "fertilizer": "Use NPK fertilizers.",
+        "pest": "Neem oil is effective.",
+        "irrigation": "Drip irrigation saves water."
     }
 
     for key in responses:
-        if key in user_input:
-            return responses[key]
+        if  user_input.strip() in responses:
+            return responses[user_input.strip()]
 
-    return "Sorry, I can help with crops, fertilizer, pests, irrigation, soil, weather, and government schemes."
+    # 🤖 AI fallback
+    return get_ai_response(user_input)
 
-@app.route("/", methods=["GET", "POST"])
+def detect_disease_from_image(filename):
+    return get_ai_response(f"Analyze this image and identify any crop diseases: {filename}")
+
+
+# -------------------- ROUTES --------------------
+@app.route("/")
 def home():
-    bot_response = ""
+    return render_template("index.html")
 
-    if request.method == "POST":
-        user_input = request.form["message"]
-        bot_response = get_bot_response(user_input)
-        return bot_response
 
-        conn = sqlite3.connect("chatbot.db")
-        c = conn.cursor()
+@app.route("/chat", methods=["POST"])
+def chat():
+    user_input = request.json["message"]
+    bot_response = get_bot_response(user_input)
 
-        c.execute(
-            "INSERT INTO chats (question, answer, language, timestamp) VALUES (?, ?, ?, ?)",
-            (user_input, bot_response, "English", datetime.now())
-        )
+    conn = sqlite3.connect("chatbot.db")
+    c = conn.cursor()
 
-        conn.commit()
-        conn.close()
+    c.execute(
+        "INSERT INTO chats (question, answer, language, timestamp) VALUES (?, ?, ?, ?)",
+        (user_input, bot_response, "English", datetime.now())
+    )
 
-    return render_template("index.html", response=bot_response)
+    conn.commit()
+    conn.close()
 
+    return {"response": bot_response}
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    file = request.files["image"]
+
+    if file:
+        filename = file.filename
+        result = detect_disease_from_image(filename)
+        return {"result": result}
+    return {"result": "No file uploaded"}
+
+# -------------------- MAIN --------------------
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
