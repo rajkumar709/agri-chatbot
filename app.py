@@ -21,7 +21,7 @@ def get_ai_response(user_input):
     }
 
     data = {
-        "model": "stepfun/step-3.5-flash",  # ✅ FREE MODEL
+        "model": "stepfun/step-3.5-flash-free",  # ✅ FREE MODEL
         "messages": [
             {
                 "role": "user",
