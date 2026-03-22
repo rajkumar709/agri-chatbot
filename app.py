@@ -1,18 +1,18 @@
 import sqlite3
-import os
 from datetime import datetime
 from flask import Flask, render_template, request
 import requests
 from PIL import Image
 from twilio.twiml.messaging_response import MessagingResponse
 
-app = Flask(__name__)
+app = Flask(__name__)   
 
-# 🔑 ADD YOUR OPENROUTER API KEY HERE
-OPENROUTER_API_KEY = os.getenv("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")
+OPENROUTER_API_KEY="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"
 
 # -------------------- AI FUNCTION --------------------
 def get_ai_response(user_input):
+    import os
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     url = "https://openrouter.ai/api/v1/chat/completions"
 
     headers = {
@@ -21,7 +21,7 @@ def get_ai_response(user_input):
     }
 
     data = {
-        "model": "stepfun/step-3.5-flash:free",  # ✅ FREE MODEL
+        "model": "stepfun/step-3.5-flash",  # ✅ FREE MODEL
         "messages": [
             {
                 "role": "user",
@@ -38,7 +38,7 @@ def get_ai_response(user_input):
         response = requests.post(url, headers=headers, json=data)
         result = response.json()
 
-        print("API RESPONSE:", result)
+        print("API RESULT:", result)
 
         if "choices" in result:
             return result["choices"][0]["message"]["content"]
