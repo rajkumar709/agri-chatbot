@@ -7,7 +7,6 @@ from twilio.twiml.messaging_response import MessagingResponse
 
 app = Flask(__name__)   
 
-OPENROUTER_API_KEY="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"
 
 # -------------------- AI FUNCTION --------------------
 def get_ai_response(user_input):
@@ -21,7 +20,7 @@ def get_ai_response(user_input):
     }
 
     data = {
-        "model": "stepfun/step-3.5-flash-free",  # ✅ FREE MODEL
+        "model": "stepfun/step-3.5-flash:free",  # ✅ FREE MODEL
         "messages": [
             {
                 "role": "user",
