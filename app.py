@@ -17,9 +17,7 @@ def get_ai_response(user_input):
 
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:5000",
-        "X-Title": "AgriChatbot"
+        "Content-Type": "application/json"
     }
 
     data = {
