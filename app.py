@@ -12,6 +12,12 @@ app = Flask(__name__)
 def get_ai_response(user_input):
     import os
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+    if not OPENROUTER_API_KEY:
+        OPENROUTER_API_KEY = "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"
+
+    print("KEY:", OPENROUTER_API_KEY)
+
     url = "https://openrouter.ai/api/v1/chat/completions"
 
     headers = {
@@ -20,7 +26,7 @@ def get_ai_response(user_input):
     }
 
     data = {
-        "model": "stepfun/step-3.5-flash:free",  # ✅ FREE MODEL
+        "model": "z-ai/glm-4.5-air:free",  # ✅ FREE MODEL
         "messages": [
             {
                 "role": "user",
