@@ -14,7 +14,7 @@ def get_ai_response(user_input):
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
     if not OPENROUTER_API_KEY:
-        OPENROUTER_API_KEY = "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"
+        OPENROUTER_API_KEY = "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"
 
     print("KEY:", OPENROUTER_API_KEY)
 
@@ -143,6 +143,8 @@ def get_bot_response(user_input):
     return get_ai_response(user_input)
 
 def detect_disease_from_image(filename):
+    img = Image.open(filename)
+    img = img.resize((224, 224))
     return get_ai_response(f"Analyze this image and identify any crop diseases: {filename}")
 
 
