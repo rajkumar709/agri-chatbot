@@ -42,10 +42,33 @@ def get_ai_response(user_input, base64_image=None):
         "messages": [
             {
                 "role": "user",
-                "content": user_input if not base64_image else content_payload
+                "content": """You are Agri AI Assistant.
+                Answer ONLY about agriculture-related queries.
+                Topics:
+                - Crops
+                - Diseases
+                - Weather
+                - Fertilizers
+                - Irrigation
+                - Pest Control
+                - Soil Types
+                - Farming Techniques
+                - Market Prices
+                - Crop Recommendations
+                - Sustainable Practices
+                - Government Schemes
+                - Agricultural News
+                
+                if the question is not related to agriculture, reply:
+                    "Sorry, I can only answer agriculture-related questions."""
+            },
+            {
+                "role": "user",
+                "content": content_payload
             }
         ]
     }
+
     
 
     try:
@@ -99,7 +122,7 @@ def get_weather(city):
     response = requests.get(url, params=params)
     print("Status Code:", response.status_code)
     print("Response:", response.text)
-    
+
     data = response.json()
 
     if response.status_code != 200:
@@ -168,7 +191,7 @@ def detect_disease_from_image(file_storage):
         return get_ai_response("Analyze this image and identify any crop diseases:", base64_image=base64_encoded)
     except Exception as e:
         return f"Error processing image: {str(e)}"
-
+    
 
 # -------------------- ROUTES --------------------
 @app.route("/")
