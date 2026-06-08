@@ -3,13 +3,13 @@ from datetime import datetime
 from flask import Flask, render_template, request
 import requests
 from PIL import Image
-from twilio.twiml.messaging_response import MessagingResponse
+
 
 app = Flask(__name__)   
 
 
 # -------------------- AI FUNCTION --------------------
-def get_ai_response(user_input):
+def get_ai_response(user_input, base64_image=None):
     import os
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
@@ -25,19 +25,28 @@ def get_ai_response(user_input):
         "Content-Type": "application/json"
     }
 
+    
+
+    if base64_image:
+        content_payload = [
+            {"type": "text", "text": f"Analyze this image and identify any crop diseases: {user_input}"},
+            {"type": "image_url", "image_url": {
+                "url":f"data:image/jpeg;base64,{base64_image}"
+            }
+            }
+        ]
+    else:
+        content_payload = f"you are an agriculture expert chatbot. answer in 1-2 sentences. {user_input}"   
     data = {
-        "model": "z-ai/glm-4.5-air:free",  # ✅ FREE MODEL
+        "model": "z-ai/glm-4.5-air:free", # ✅ FREE MODEL       
         "messages": [
             {
                 "role": "user",
-                "content": f"you are an agriculture expert chatbot. answer in 1-2 sentences. {user_input}"
-            },
-            {
-                "role": "user",
-                "content": user_input
+                "content": user_input if not base64_image else content_payload
             }
         ]
     }
+    
 
     try:
         response = requests.post(url, headers=headers, json=data)
@@ -45,10 +54,13 @@ def get_ai_response(user_input):
 
         print("API RESULT:", result)
 
-        if "choices" in result:
-            return result["choices"][0]["message"]["content"]
-        else:
-            return f"API Error: {result}"
+        if "choices" in result and len(result["choices"]) > 0:
+            choice = result["choices"][0]
+            if "message" in choice and "content" in choice["message"]:
+                return choice["message"]["content"]
+            if "error" in result:
+                return f"API Error: {result['error']}"
+        return "the AI analyzed the image but didn't return a valid response."
 
     except Exception as e:
         return f"Error: {str(e)}"
@@ -85,6 +97,9 @@ def get_weather(city):
     }
 
     response = requests.get(url, params=params)
+    print("Status Code:", response.status_code)
+    print("Response:", response.text)
+    
     data = response.json()
 
     if response.status_code != 200:
@@ -142,10 +157,17 @@ def get_bot_response(user_input):
     # 🤖 AI fallback
     return get_ai_response(user_input)
 
-def detect_disease_from_image(filename):
-    img = Image.open(filename)
-    img = img.resize((224, 224))
-    return get_ai_response(f"Analyze this image and identify any crop diseases: {filename}")
+def detect_disease_from_image(file_storage):
+    try:
+        import base64
+        image_bytes = file_storage.read()
+        base64_encoded = base64.b64encode(image_bytes).decode("utf-8")
+        img = Image.open(file_storage.stream)
+        img = img.resize((224, 224))
+    
+        return get_ai_response("Analyze this image and identify any crop diseases:", base64_image=base64_encoded)
+    except Exception as e:
+        return f"Error processing image: {str(e)}"
 
 
 # -------------------- ROUTES --------------------
@@ -174,12 +196,15 @@ def chat():
 
 @app.route("/predict", methods=["POST"])
 def predict():
+    if "image" not in request.files:
+        return {"result": "No file part"}
+    
     file = request.files["image"]
 
-    if file:
-        filename = file.filename
-        result = detect_disease_from_image(filename)
+    if file and file.filename != "":
+        result = detect_disease_from_image(file)
         return {"result": result}
+    
     return {"result": "No file uploaded"}
 
 # -------------------- MAIN --------------------
