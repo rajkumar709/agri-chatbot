@@ -45,6 +45,7 @@ def get_ai_response(user_input, base64_image=None):
                 "content": """You are Agri AI Assistant.
                 Answer ONLY about agriculture-related queries.
                 Topics:
+                -hello
                 - Crops
                 - Diseases
                 - Weather
