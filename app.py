@@ -38,7 +38,7 @@ def get_ai_response(user_input, base64_image=None):
     else:
         content_payload = f"you are an agriculture expert chatbot. answer in 1-2 sentences. {user_input}"   
     data = {
-        "model": "z-ai/glm-4.5-air:free", # ✅ FREE MODEL       
+        "model": "poolside/laguna-m.1:free", # ✅ FREE MODEL       
         "messages": [
             {
                 "role": "user",
